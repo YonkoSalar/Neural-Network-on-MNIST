@@ -96,6 +96,7 @@ public:
     // use this function to scale our matrix
     void multiply(float num)
     {
+        // Scalar
         for (int i = 0; i < rows_; i++)
         {
             for (int j = 0; j < cols_; j++)
@@ -113,8 +114,9 @@ public:
     {
        
         //If type is a single number
-        if(std::is_same<T, float>::value)
+        if constexpr (std::is_same<T, float>::value)
         {
+            cout << "inside if" << endl;
             for (int i = 0; i < rows_; i++)
             {
                 for (int j = 0; j < cols_; j++)
@@ -125,7 +127,7 @@ public:
         }
 
          // If type is a matrix
-        else if (std::is_same<T, Matrix>::value)
+        else if constexpr (std::is_same<T, Matrix>::value)
         {
             cout << "hallo" << endl;
             for (int i = 0; i < rows_; i++)
@@ -137,10 +139,7 @@ public:
             }
 
         }
-        else 
-        {
-            exit(1);
-        }
+        
     }
 
     // Print matrix
@@ -173,9 +172,14 @@ int main()
 
     Matrix matrix2(2, 2);
 
-    float num = 2.0;
+    float num = 5.0;
 
     matrix1.add<float>(num);
+    matrix2.add<float>(num);
+
+
+    matrix1.add<Matrix>(matrix2);
+
 
     matrix1.print();
 }
