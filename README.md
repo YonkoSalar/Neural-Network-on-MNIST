@@ -16,5 +16,6 @@ This project in created to get a deeper fundemental knowledge of how to construc
     - Matrix Product
     - Transpose
 - [ ] Perceptron
+- [ ] Activation function (sigmoid)
 - [ ] Forward Pass
 - [ ] Backward Pass
