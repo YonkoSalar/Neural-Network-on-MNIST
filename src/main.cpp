@@ -4,6 +4,9 @@
 #include <random>
 #include <type_traits>
 #include <stdexcept>
+#include <bits/stdc++.h>
+
+
 
 using namespace std;
 
@@ -40,20 +43,7 @@ public:
         }
     }
 
-    // Simple activation function (last layer output)
-    int sign(int num)
-    {
-        if (num <= 0)
-        {
-            num = -1;
-        }
-        else
-        {
-            num = 1;
-        }
-
-        return num;
-    }
+    
 
     // Output of first layer perceptron
     float output(float *inputs)
@@ -62,15 +52,26 @@ public:
         for (int i = 0; i < (sizeof(weights) / sizeof(*weights)); i++)
         {
 
-            sum += inputs[i] * weights[i];
+            sum += (inputs[i] * weights[i]);
         }
 
-        sum = sign(sum);
+        sum = sigmoid(sum);
 
         return sum;
     }
 };
 
+
+
+
+////////////////////////
+//  SIGMOID FUNCTION //
+///////////////////////
+float sigmoid(float x)
+{
+    return 1 / (1+ exp(-x));
+
+}
 
 
 
@@ -82,6 +83,7 @@ class Matrix
 private:
     int rows_, cols_;
     float **matrix_;
+
 
 public:
     // Initlize matrix with zeros
@@ -103,6 +105,27 @@ public:
                 matrix_[i][j] = 0.0;
             }
         }
+
+    }
+
+    
+
+    // We can call this function without creating object
+    static Matrix list_to_matrix(float *list)
+    {
+
+        // Turn list of input into matrix
+        Matrix input_matrix(sizeof(list) / sizeof(*list)+1, 1);
+
+
+        for(int i = 0; i < sizeof(list) / sizeof(*list); i++)
+        {
+            input_matrix.matrix_[i][0] = list[i];
+        }
+
+        
+        return input_matrix;
+
     }
 
 
@@ -110,7 +133,7 @@ public:
     {
          // Generate random number between [-1, 1]
         mt19937 rng(std::random_device{}());
-        uniform_int_distribution<> dist(0, 10);
+        uniform_int_distribution<> dist(-1, 1);
 
 
         for(int i = 0; i < rows_; i++)
@@ -272,7 +295,13 @@ public:
             cout << endl;
         }
     }
+
+
+   
 };
+
+
+
 
 
 //////////////////////
@@ -288,17 +317,57 @@ class NeuralNetwork
         int output_nodes;
 
 
+        Matrix *weights_input_hidden;
+        Matrix *weights_hidden_output;
+
+        Matrix *bias_hidden;
+        Matrix *bias_output;
+
+
+
 
     public: 
         NeuralNetwork(int input_nodes, int hidden_nodes, int output_nodes) 
         : input_nodes(input_nodes), hidden_nodes(hidden_nodes), output_nodes(output_nodes)
         {
+            // Weight matrix from input to hidden layer
+            weights_input_hidden = new Matrix(hidden_nodes, input_nodes);   
+
+            // Weight matrix from hidden to output layer
+            weights_hidden_output = new Matrix(output_nodes, hidden_nodes);
+
+            // Randomize weights
+            weights_input_hidden->randomize();
+            weights_hidden_output->randomize();
+
+            // Matrix for biases which is number of nodes 
+            bias_hidden = new Matrix(hidden_nodes, 1);
+            bias_output = new Matrix(output_nodes, 1);
+
+
 
         }
 
+        
 
-        void feed_forward()
+
+
+        
+
+        //template <typename T>
+        void forward_pass(float *input_list)
         {
+            // Generate input matrix
+            Matrix inputs = Matrix::list_to_matrix(input_list);
+
+            // Generate hidden layer
+            Matrix hidden_layer = weights_input_hidden->multiply(inputs);
+
+            // Add bias to each hidden neuron
+            hidden_layer.add(bias_hidden);
+
+            
+
 
         }
 
@@ -326,14 +395,22 @@ int main()
     Matrix matrix1(3,3);
 
     matrix1.randomize();
-    matrix1.print();
+    //matrix1.print();
+
+    float input[] = {1.0, 2.0, 1.2};
+
+    cout << "Size main: " << sizeof(input) / sizeof(*input) << endl;
+    Matrix input_matrix = Matrix::list_to_matrix(input);
+
+    input_matrix.print();
+
+
+
+    
 
     /*
     Matrix matrix2(2, 2);
 
-    
-
-    
     matrix1.add<float>(5.0);
     matrix2.add<float>(2.0);
 
