@@ -11,10 +11,14 @@
 using namespace std;
 
 
+
+
+
+
 /////////////////
 // PERCEPTRON //
 ////////////////
-
+/*
 class Perceptron
 {
 public:
@@ -61,17 +65,12 @@ public:
     }
 };
 
+*/
 
 
 
-////////////////////////
-//  SIGMOID FUNCTION //
-///////////////////////
-float sigmoid(float x)
-{
-    return 1 / (1+ exp(-x));
 
-}
+
 
 
 
@@ -115,7 +114,7 @@ public:
     {
 
         // Turn list of input into matrix
-        Matrix input_matrix(sizeof(list) / sizeof(*list)+1, 1);
+        Matrix input_matrix(sizeof(list) / sizeof(*list), 1);
 
 
         for(int i = 0; i < sizeof(list) / sizeof(*list); i++)
@@ -228,7 +227,6 @@ public:
             //If type is a single number
             if constexpr (std::is_same<T, float>::value)
             {
-                cout << "inside if" << endl;
                 for (int i = 0; i < rows_; i++)
                 {
                     for (int j = 0; j < cols_; j++)
@@ -241,7 +239,6 @@ public:
             // If type is a matrix
             else if constexpr (std::is_same<T, Matrix>::value)
             {
-                cout << "hallo" << endl;
                 for (int i = 0; i < rows_; i++)
                 {
                     for (int j = 0; j < cols_; j++)
@@ -261,7 +258,7 @@ public:
         catch(T num)
         {
             cout << "Type is undefined - Must be either matrix or float" << endl;
-            cout << "Type of variable num is: " << typeid(num).name() << endl;
+            cout << "Type of variable is: " << typeid(num).name() << endl;
         }
       
         
@@ -282,6 +279,31 @@ public:
         return result;
 
     }
+
+
+
+    // Activation function
+    float sigmoid(float x)
+    {
+        return 1 / (1+ exp(-x));
+
+    }
+
+
+    // Apply activation function to all neuron of matrix
+    void generate_output()
+    {
+        for(int i = 0; i < rows_; i++)
+        {
+            for(int j= 0; j < cols_; j++)
+            {
+                matrix_[i][j] = sigmoid(matrix_[i][j]);
+            }
+        }
+
+    }
+
+
 
     // Print matrix
     void print()
@@ -350,23 +372,31 @@ class NeuralNetwork
 
         
 
-
-
         
 
-        //template <typename T>
         void forward_pass(float *input_list)
         {
             // Generate input matrix
             Matrix inputs = Matrix::list_to_matrix(input_list);
 
+
             // Generate hidden layer
             Matrix hidden_layer = weights_input_hidden->multiply(inputs);
 
-            // Add bias to each hidden neuron
-            hidden_layer.add(bias_hidden);
+            // Add bias to each neuron in hidden layer
+            hidden_layer.add(*bias_hidden);
 
+            // Output of hidden layer
+            hidden_layer.generate_output();
+
+            // Generate final output
+            Matrix output = weights_hidden_output->multiply(hidden_layer);
             
+            // Add bias
+            output.add(*bias_output);
+
+            // Final result (last neuron)
+            output.generate_output(); 
 
 
         }
@@ -397,12 +427,23 @@ int main()
     matrix1.randomize();
     //matrix1.print();
 
-    float input[] = {1.0, 2.0, 1.2};
 
+    /*
     cout << "Size main: " << sizeof(input) / sizeof(*input) << endl;
     Matrix input_matrix = Matrix::list_to_matrix(input);
+    */
 
-    input_matrix.print();
+    //input_matrix.print();
+    
+    float input[] = {1.0, 0.0};
+
+    NeuralNetwork *nn = new NeuralNetwork(2,2,1);
+
+    nn->forward_pass(input);
+
+
+
+
 
 
 
