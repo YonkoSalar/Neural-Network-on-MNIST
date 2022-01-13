@@ -110,14 +110,15 @@ public:
     
 
     // We can call this function without creating object
-    static Matrix list_to_matrix(float *list)
+    static Matrix list_to_matrix(float *list, int size)
     {
 
         // Turn list of input into matrix
-        Matrix input_matrix(sizeof(list) / sizeof(*list), 1);
+        Matrix input_matrix(size, 1);
 
 
-        for(int i = 0; i < sizeof(list) / sizeof(*list); i++)
+
+        for(int i = 0; i < size; i++)
         {
             input_matrix.matrix_[i][0] = list[i];
         }
@@ -161,7 +162,7 @@ public:
                 // Chekc if matix product is possible
                 if(cols_ != num.rows_)
                 {
-                    throw runtime_error("Matrid product not possible!");
+                    throw runtime_error("Matrix product not possible!");
                 }
                 
                 // New Matrix
@@ -264,6 +265,48 @@ public:
         
     }
 
+
+
+     // Used to add a number to each element in our matrix
+    
+    Matrix subtract(Matrix num)
+    {
+        try {
+       
+           
+
+            // If type is a matrix
+            if constexpr (std::is_same<Matrix, Matrix>::value)
+            {
+                Matrix result(rows_, cols_);
+
+
+                for (int i = 0; i < rows_; i++)
+                {
+                    for (int j = 0; j < cols_; j++)
+                    {
+                        result.matrix_[i][j] = matrix_[i][j] - num.matrix_[i][j];
+                    }
+                }
+
+                return result;
+
+            }
+            else 
+            {
+                throw(num);
+            }
+
+        }
+
+        catch(Matrix num)
+        {
+            cout << "Type is undefined - Must be matrix" << endl;
+        }
+      
+        
+    }
+
     Matrix transpose()
     {
         Matrix result = Matrix(cols_, rows_);
@@ -303,6 +346,22 @@ public:
 
     }
 
+
+    float *to_list()
+    {
+        float outputs[rows_ * cols_];
+
+        for(int i = 0; i < rows_; i++)
+        {
+            for(int j = 0; j < cols_; j++)
+            {
+                outputs[i + j] = matrix_[i][j];
+            }
+        }
+
+        return outputs;
+
+    }
 
 
     // Print matrix
@@ -374,10 +433,10 @@ class NeuralNetwork
 
         
 
-        void forward_pass(float *input_list)
+        Matrix forward_pass(float *input_list, int size)
         {
             // Generate input matrix
-            Matrix inputs = Matrix::list_to_matrix(input_list);
+            Matrix inputs = Matrix::list_to_matrix(input_list, size);
 
 
             // Generate hidden layer
@@ -398,6 +457,9 @@ class NeuralNetwork
             // Final result (last neuron)
             output.generate_output(); 
 
+            
+            return output;
+
 
         }
 
@@ -406,6 +468,34 @@ class NeuralNetwork
 
         }
 
+
+        void train(float *inputs_list, int input_size, float *targets_list, int target_size)
+        {
+            // Input matrix
+            Matrix outputs = this->forward_pass(inputs_list, input_size);
+            
+            // Target matrix
+            Matrix targets = Matrix::list_to_matrix(targets_list, target_size);
+
+        
+            // Output layer error (ERROR = TARGET - OUTPUTS)
+            Matrix output_errors = targets.subtract(outputs);
+
+            // Hidden layer error
+            Matrix weight_hidden_output_tr = weights_hidden_output->transpose();
+            Matrix hidden_errors = weight_hidden_output_tr.multiply(output_errors);
+
+            cout << "Target: " << endl;
+            targets.print();
+
+            cout << "Outputs: " << endl;
+            outputs.print();
+
+            cout << "Error: " << endl;
+            output_errors.print();
+            
+
+        }
 };
 
 
@@ -413,58 +503,17 @@ class NeuralNetwork
 int main()
 {
 
-    // // Test M
-    // Perceptron test1;
-
-    // float inputs[2] = {0.5, -0.2};
-
-    // printf("Output %f \n", test1.output(inputs));
-
-    // std::cout << "hello world" << std::endl;
-
-    Matrix matrix1(3,3);
-
-    matrix1.randomize();
-    //matrix1.print();
-
-
-    /*
-    cout << "Size main: " << sizeof(input) / sizeof(*input) << endl;
-    Matrix input_matrix = Matrix::list_to_matrix(input);
-    */
-
-    //input_matrix.print();
+   
     
-    float input[] = {1.0, 0.0};
+    float inputs[] = {1.0, 0.0};
+    float targets[] = {1.0};
 
     NeuralNetwork *nn = new NeuralNetwork(2,2,1);
 
-    nn->forward_pass(input);
+    nn->train(inputs, 2, targets, 1);
 
+    //nn->forward_pass(input);
 
-
-
-
-
-
-    
-
-    /*
-    Matrix matrix2(2, 2);
-
-    matrix1.add<float>(5.0);
-    matrix2.add<float>(2.0);
-
-    
-
-    matrix1.print();
-    matrix2.print();
-
-
-    Matrix matrix3 = matrix1.multiply(matrix2);
-
-    matrix3.print();
-    */
 
 
 }
