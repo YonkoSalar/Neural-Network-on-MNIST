@@ -332,17 +332,39 @@ public:
 
     }
 
+    // Derivative of sigmoid (BACK PROGOATION)
+    float derivative_sigmoid(float y)
+    {
+        return y * (1-y);
+    }
+
 
     // Apply activation function to all neuron of matrix
-    void generate_output()
+    void generate_output(int act)
     {
-        for(int i = 0; i < rows_; i++)
+        if(act == 1)
         {
-            for(int j= 0; j < cols_; j++)
+            for(int i = 0; i < rows_; i++)
             {
-                matrix_[i][j] = sigmoid(matrix_[i][j]);
+                for(int j= 0; j < cols_; j++)
+                {
+                    matrix_[i][j] = sigmoid(matrix_[i][j]);
+                }
             }
+
         }
+        else if (act == 2)
+        {
+            for(int i = 0; i < rows_; i++)
+            {
+                for(int j= 0; j < cols_; j++)
+                {
+                    matrix_[i][j] = derivative_sigmoid(matrix_[i][j]);
+                }
+            }
+
+        }
+        
 
     }
 
@@ -404,6 +426,8 @@ class NeuralNetwork
         Matrix *bias_hidden;
         Matrix *bias_output;
 
+        float learning_rate;
+
 
 
 
@@ -424,6 +448,9 @@ class NeuralNetwork
             // Matrix for biases which is number of nodes 
             bias_hidden = new Matrix(hidden_nodes, 1);
             bias_output = new Matrix(output_nodes, 1);
+
+            // Set learning rate
+            learning_rate = 0.1;
 
 
 
@@ -446,7 +473,7 @@ class NeuralNetwork
             hidden_layer.add(*bias_hidden);
 
             // Output of hidden layer
-            hidden_layer.generate_output();
+            hidden_layer.generate_output(1);
 
             // Generate final output
             Matrix output = weights_hidden_output->multiply(hidden_layer);
@@ -455,7 +482,7 @@ class NeuralNetwork
             output.add(*bias_output);
 
             // Final result (last neuron)
-            output.generate_output(); 
+            output.generate_output(1); 
 
             
             return output;
@@ -471,9 +498,20 @@ class NeuralNetwork
 
         void train(float *inputs_list, int input_size, float *targets_list, int target_size)
         {
-            // Input matrix
-            Matrix outputs = this->forward_pass(inputs_list, input_size);
-            
+
+            // Generate output of the hidden
+            Matrix inputs = Matrix::list_to_matrix(inputs_list, input_size);
+            Matrix hidden = weights_input_hidden->multiply(inputs);
+            hidden.add(bias_hidden);
+
+            // Actiavtion function
+            hidden.generate_output(1);
+
+            // Generate output of output layer
+            Matrix outputs = weights_hidden_output->multiply(hidden);
+            outputs.add(bias_output);
+            outputs.generate_output(1);
+
             // Target matrix
             Matrix targets = Matrix::list_to_matrix(targets_list, target_size);
 
@@ -481,19 +519,39 @@ class NeuralNetwork
             // Output layer error (ERROR = TARGET - OUTPUTS)
             Matrix output_errors = targets.subtract(outputs);
 
-            // Hidden layer error
-            Matrix weight_hidden_output_tr = weights_hidden_output->transpose();
-            Matrix hidden_errors = weight_hidden_output_tr.multiply(output_errors);
+            // Calculate gradient
+            Matrix gradients = outputs;
+            gradients.generate_output(2);
+            gradients.multiply(output_errors);
+            gradients.multiply(learning_rate);
 
-            cout << "Target: " << endl;
-            targets.print();
+            // Caculate deltas
+            Matrix hidden_transpose = hidden.transpose();
+            Matrix weights_hidden_output_deltas = gradients.multiply(hidden_transpose);
 
-            cout << "Outputs: " << endl;
-            outputs.print();
+            // Adjust the weights by deltas
+            weights_hidden_output->add(weights_hidden_output_deltas);
 
-            cout << "Error: " << endl;
-            output_errors.print();
+            // Adjust the bias by its deltas
+            bias_output->add(gradients);
+
+            // Calculate the hidden layer errors
+            Matrix weights_hidden_output_transpose = weights_hidden_output->transpose();
+            Matrix hidden_errors = weights_hidden_output_transpose.multiply(output_errors);
+
             
+            // Calculate hidden gradient
+            Matrix hidden_gradient = hidden.generate_output(2);
+            hidden_gradient.multiply(hidden_errors);
+            hidden_gradient.multiply(learning_rate);
+
+
+             // Calcuate input to hidden deltas
+            Matrix inputs_T = inputs.transpose();
+            Matrix weight_input_hidden_deltas = hidden_gradient.multiply(inputs_T);
+
+            weights_input_hidden->add(weight_input_hidden_deltas);
+            bias_hidden->add(hidden_gradient);
 
         }
 };
